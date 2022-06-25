@@ -38,27 +38,27 @@ class Eval2DFront:
         本方法主要是：将标注的整个json分成多个json,类似感知结果json
         '''
         self.perce_jsons_list = utils.get_json_list(self.perce_path)
-        # self.lable_jsons_old_list = utils.get_json_list(self.lable_path)
-        # lable_new_path = os.path.join(self.lable_path,'new')
-        # if not os.path.exists(lable_new_path):
-        #     os.makedirs(lable_new_path)
-        # lable_json_data = utils.get_json_data(self.lable_jsons_old_list[0])
-        # for lable_result in lable_json_data:
-        #     if lable_result["task_vehicle"]==[]:
-        #         continue
-        #     lable_result_temp = lable_result
-        #     lable_json_name = (lable_result["filename"])[:-4] + '.json'
-        #     lable_new_json_path = lable_new_path + '/' + lable_json_name
-        #     for perce_json in self.perce_jsons_list:
-        #         perce_json_name = os.path.basename(perce_json)
-        #         if lable_json_name == perce_json_name: 
-        #             with open(lable_new_json_path,'w') as f:
-        #                 json.dump(lable_result_temp,f,indent=4)
-        #             break
-        #     if not os.path.exists(lable_new_json_path):
-        #         print('感知结果目录下不存在'+ lable_json_name + '文件，请检查！')
-        # self.lable_jsons_list = utils.get_json_list(lable_new_path)
-        self.lable_jsons_list = utils.get_json_list(self.lable_path)
+        self.lable_jsons_old_list = utils.get_json_list(self.lable_path)
+        self.lable_new_path = os.path.join(os.path.dirname(self.lable_path),'new_gt')
+        if not os.path.exists(self.lable_new_path):
+            os.makedirs(self.lable_new_path)
+        lable_json_data = utils.get_json_data(self.lable_jsons_old_list[0])
+        for lable_result in lable_json_data:
+            if lable_result["task_vehicle"]==[]:
+                continue
+            lable_result_temp = lable_result
+            lable_json_name = (lable_result["filename"])[:-4] + '.json'
+            lable_new_json_path = self.lable_new_path + '/' + lable_json_name
+            for perce_json in self.perce_jsons_list:
+                perce_json_name = os.path.basename(perce_json)
+                if lable_json_name == perce_json_name: 
+                    with open(lable_new_json_path,'w') as f:
+                        json.dump(lable_result_temp,f,indent=4)
+                    break
+            if not os.path.exists(lable_new_json_path):
+                print('感知结果目录下不存在'+ lable_json_name + '文件，请检查！')
+        self.lable_jsons_list = utils.get_json_list(self.lable_new_path)
+        # self.lable_jsons_list = utils.get_json_list(self.lable_path)
     
     def match_lable_perce(self):
         '''
@@ -185,8 +185,6 @@ class Eval2DFront:
                     iou_max_value = iou_max_item[1]
                     iou_max_id = iou_max_item[0]
                     if iou_max_value >= self.iou:
-                        # lable_type = lable_type_list[iou_max_id]
-                        # if perce_type_list[t]==lable_type:
                         del lable_boxs_list[iou_max_id]
                         del lable_type_list[iou_max_id]
                     else:
@@ -197,15 +195,16 @@ class Eval2DFront:
                         print_errdet_json["lable_box"] = None
                         print_errdet_json["perce_box"] = perce_boxs_list[t]
                         print_errdet.append(print_errdet_json)
-                    if print_typeerr!=[]:
-                        with open(os.path.join(typeerr_json,lable_json_name),'w') as pf1:
-                            json.dump(print_typeerr,pf1,indent=4)
-                    if print_missdet!=[]:
-                        with open(os.path.join(missdet_json,lable_json_name),'w') as pf2:
-                            json.dump(print_missdet,pf2,indent=4)
-                    if print_errdet!=[]:
-                        with open(os.path.join(errdet_json,lable_json_name),'w') as pf3:
-                            json.dump(print_errdet,pf3,indent=4)
+                if print_typeerr!=[]:
+                    with open(os.path.join(typeerr_json,lable_json_name),'w') as pf1:
+                        json.dump(print_typeerr,pf1,indent=4)
+                if print_missdet!=[]:
+                    with open(os.path.join(missdet_json,lable_json_name),'w') as pf2:
+                        json.dump(print_missdet,pf2,indent=4)
+                if print_errdet!=[]:
+                    with open(os.path.join(errdet_json,lable_json_name),'w') as pf3:
+                        json.dump(print_errdet,pf3,indent=4)
+        
         for type in self.obstacle_type:
             df.iloc[4,df.columns.get_loc(type)] = df.iloc[0,df.columns.get_loc(type)] + df.iloc[1,df.columns.get_loc(type)] + df.iloc[2,df.columns.get_loc(type)]
             df.iloc[5,df.columns.get_loc(type)] = df.iloc[0,df.columns.get_loc(type)] + df.iloc[1,df.columns.get_loc(type)] + df.iloc[3,df.columns.get_loc(type)]
@@ -253,10 +252,11 @@ class Eval2DFront:
                         cv2.rectangle(img_data,(x2,y2),(x3,y3),(0,0,255),1)                    
                         cv2.putText(img_data,perce_type,(x2,y3),cv2.FONT_HERSHEY_SIMPLEX,1,(0,0,255),1)
                 cv2.imwrite(img_dst, img_data)
+        '''误检：打印所有的标注的type和box'''
         for root,_,files in os.walk(os.path.join(self.err_pic,'errdet')):
             for file_ in files:
                 pngfile = os.path.join(root,file_)
-                jsonfile = os.path.join(self.lable_path,(file_.replace('.png','.json')))
+                jsonfile = os.path.join(self.lable_new_path,(file_.replace('.png','.json')))
                 imgdata4 = cv2.imread(pngfile)
                 for temp in (utils.get_json_data(jsonfile))["task_vehicle"]:
                     lable_type4 = temp["tags"]["class"][:4]
@@ -267,7 +267,7 @@ class Eval2DFront:
                     cv2.rectangle(imgdata4,(x4,y4),(x4+w4,y4+h4),(0,255,0),1)
                     cv2.putText(imgdata4,lable_type4,(x4,y4),cv2.FONT_HERSHEY_SIMPLEX,1,(0,255,0),1)
                 cv2.imwrite(pngfile, imgdata4) 
-
+        '''漏检：打印所有的检测的type和box'''
         for root,_,files in os.walk(os.path.join(self.err_pic,'missdet')):
             for file_ in files:
                 pngfile = os.path.join(root,file_)
