@@ -259,7 +259,7 @@ class Eval2DFront:
                 jsonfile = os.path.join(self.lable_path,(file_.replace('.png','.json')))
                 imgdata4 = cv2.imread(pngfile)
                 for temp in (utils.get_json_data(jsonfile))["task_vehicle"]:
-                    lable_type4 = temp["tags"]["class"]
+                    lable_type4 = temp["tags"]["class"][:4]
                     x4 = int(temp["tags"]["x"])
                     y4 = int(temp["tags"]["y"])
                     w4 = int(temp["tags"]["width"])
@@ -274,7 +274,7 @@ class Eval2DFront:
                 jsonfile = os.path.join(self.perce_path,file_.replace('.png','.json'))
                 imgdata5 = cv2.imread(pngfile)
                 for temp in (utils.get_json_data(jsonfile))["tracks"]:
-                    perce_type5 = self.enum_obstacle[temp["obstacle_type"]]
+                    perce_type5 = self.enum_obstacle[temp["obstacle_type"]][:4]
                     x5 = int(temp["uv_bbox2d"]["obstacle_bbox.x"]) * self.proportion
                     y5 = int(temp["uv_bbox2d"]["obstacle_bbox.y"]) * self.proportion - self.percecut
                     w5 = int(temp["uv_bbox2d"]["obstacle_bbox.width"]) * self.proportion
