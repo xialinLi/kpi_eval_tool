@@ -82,14 +82,14 @@ def get_lable_box(lable_tag):
     topcut = config.side_2d_config["topcut"]
     proportion = config.side_2d_config["proportion"]
     lable_box = {}
-    h = lable_tag["tags"]["height"]
-    w = lable_tag["tags"]["width"]
+    h = lable_tag["tags"]["h"]
+    w = lable_tag["tags"]["w"]
     x = lable_tag["tags"]["x"]
     y = lable_tag["tags"]["y"] 
-    lable_box["obstacle_bbox.height"] = h / proportion
-    lable_box["obstacle_bbox.width"] = w / proportion
-    lable_box["obstacle_bbox.x"] = x / proportion
-    lable_box["obstacle_bbox.y"] = y / proportion
+    lable_box["h"] = h / proportion
+    lable_box["w"] = w / proportion
+    lable_box["x"] = x / proportion
+    lable_box["y"] = y / proportion
     return lable_box, x, (y+topcut)
 
 def front_2d_get_lable_box(lable_tag):
@@ -97,18 +97,18 @@ def front_2d_get_lable_box(lable_tag):
     topadd = config.front_2d_config["topadd"]
     proportion = config.front_2d_config["proportion"]
     lable_box = {}
-    h = lable_tag["tags"]["height"]
-    w = lable_tag["tags"]["width"]
+    h = lable_tag["tags"]["h"]
+    w = lable_tag["tags"]["w"]
     x = lable_tag["tags"]["x"]
     y = lable_tag["tags"]["y"] 
-    lable_box["obstacle_bbox.height"] = h / proportion
-    lable_box["obstacle_bbox.width"] = w / proportion
-    lable_box["obstacle_bbox.x"] = x / proportion
-    lable_box["obstacle_bbox.y"] = (y + topadd)/ proportion
+    lable_box["h"] = h / proportion
+    lable_box["w"] = w / proportion
+    lable_box["x"] = x / proportion
+    lable_box["y"] = (y + topadd)/ proportion
     return lable_box, x, y, w,h
 
-def judge_is_in_attentionArea(x, y, attention_area):
-    is_in = False   
+def judge_is_in_attentionArea(x,y, attention_area):
+    is_in = False  
     point = [x, y]
     xn = [float(x) for x in attention_area["xn"].replace('"', '').split(';')]
     yn = [float(y) for y in attention_area["yn"].replace('"', '').split(';')]
@@ -154,18 +154,20 @@ def bb_intersection_over_union(boxA, boxB):
     boxA 是lablebox，boxB 是percebox
     lable和perce都是左上角点
     '''
-    A11 = boxA["obstacle_bbox.x"]
-    A12 = boxA["obstacle_bbox.x"] + boxA["obstacle_bbox.width"]
-    A21 = boxA["obstacle_bbox.y"] 
-    A22 = boxA["obstacle_bbox.y"] + boxA["obstacle_bbox.height"]
+    percecut = config.front_2d_config["percecut"]
+    proportion = config.front_2d_config["proportion"]
+    A11 = boxA["x"]
+    A12 = boxA["x"] + boxA["w"]
+    A21 = boxA["y"] 
+    A22 = boxA["y"] + boxA["h"]
 
-    B11 = boxB["obstacle_bbox.x"] 
-    B12 = boxB["obstacle_bbox.x"] + boxB["obstacle_bbox.width"]
-    B21 = boxB["obstacle_bbox.y"] 
-    B22 = boxB["obstacle_bbox.y"] + boxB["obstacle_bbox.height"]
+    B11 = boxB["x"] * proportion
+    B12 = (boxB["x"] + boxB["w"]) *proportion
+    B21 = boxB["y"] * proportion - percecut
+    B22 = (boxB["y"] + boxB["h"])* proportion - percecut
 
-    areaA = boxA["obstacle_bbox.height"] * boxA["obstacle_bbox.width"]
-    areaB = boxB["obstacle_bbox.height"] * boxB["obstacle_bbox.width"]
+    areaA = boxA["h"] * boxA["w"]
+    areaB = boxB["h"] * proportion * boxB["w"] * proportion
 
     interW = max(0, min(A12, B12) - max(A11, B11))
     interH = max(0, min(A22, B22) - max(A21, B21))
@@ -185,20 +187,20 @@ def get_perce_2d_boxs(perce_json_data):
 def get_box_point(box):
     proportion = config.side_2d_config["proportion"]
     topcut = config.side_2d_config["topcut"]
-    w = box["obstacle_bbox.width"] * proportion
-    h = box["obstacle_bbox.height"] * proportion
-    x = int(box["obstacle_bbox.x"] * proportion)
-    y = int(box["obstacle_bbox.y"] * proportion + topcut)
+    w = box["w"] * proportion
+    h = box["h"] * proportion
+    x = int(box["x"] * proportion)
+    y = int(box["y"] * proportion + topcut)
     x1 = int(x+w)
     y1 = int(y+h)
     return x,y,x1,y1
 
 def front_2d_get_box_point(box):
 
-    w = box["obstacle_bbox.width"] 
-    h = box["obstacle_bbox.height"]
-    x = int(box["obstacle_bbox.x"])
-    y = int(box["obstacle_bbox.y"])
+    w = box["w"] 
+    h = box["h"]
+    x = int(box["x"])
+    y = int(box["y"])
     x1 = int(x+w)
     y1 = int(y+h)
     return x,y,x1,y1
@@ -208,18 +210,18 @@ def add_track_id_helper(last_json_data, json_data, idx):
     '增加track id'
     for tempA in json_data:
         boxA = {}
-        boxA["obstacle_bbox.height"] = tempA["box_2d"]["h"]
-        boxA["obstacle_bbox.width"] = tempA["box_2d"]["w"]
-        boxA["obstacle_bbox.x"] = tempA["box_2d"]['x']
-        boxA["obstacle_bbox.y"] = tempA["box_2d"]['y']
+        boxA["h"] = tempA["box_2d"]["h"]
+        boxA["w"] = tempA["box_2d"]["w"]
+        boxA["x"] = tempA["box_2d"]['x']
+        boxA["y"] = tempA["box_2d"]['y']
 
         iou_result = {}
         for num, tempB in enumerate(last_json_data):
             boxB = {}
-            boxB["obstacle_bbox.height"] = tempB["box_2d"]["h"]
-            boxB["obstacle_bbox.width"] = tempB["box_2d"]["w"]
-            boxB["obstacle_bbox.x"] = tempB["box_2d"]['x']
-            boxB["obstacle_bbox.y"] = tempB["box_2d"]['y']
+            boxB["h"] = tempB["box_2d"]["h"]
+            boxB["w"] = tempB["box_2d"]["w"]
+            boxB["x"] = tempB["box_2d"]['x']
+            boxB["y"] = tempB["box_2d"]['y']
 
             iou = bb_intersection_over_union(boxA, boxB)
             iou_result[num] = iou
