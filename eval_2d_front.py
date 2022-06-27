@@ -235,8 +235,8 @@ class Eval2DFront:
                 img_dst = img_path.replace('ori_pic','err_pic')
                 os.makedirs(os.path.dirname(img_dst), exist_ok=True)
                 for json_data_ in json_data:
-                    lable_type = json_data_["lable_type"]
-                    perce_type = json_data_["perce_type"]
+                    lable_type = (json_data_["lable_type"])[:3]
+                    perce_type = (json_data_["perce_type"])[:3]
                     lable_box = json_data_["lable_box"]
                     perce_box = json_data_["perce_box"]
                     if lable_type!=None or lable_box!=None:
@@ -259,7 +259,7 @@ class Eval2DFront:
                 jsonfile = os.path.join(self.lable_new_path,(file_.replace('.png','.json')))
                 imgdata4 = cv2.imread(pngfile)
                 for temp in (utils.get_json_data(jsonfile))["task_vehicle"]:
-                    lable_type4 = temp["tags"]["class"][:4]
+                    lable_type4 = temp["tags"]["class"][:3]
                     x4 = int(temp["tags"]["x"])
                     y4 = int(temp["tags"]["y"])
                     w4 = int(temp["tags"]["width"])
@@ -274,7 +274,7 @@ class Eval2DFront:
                 jsonfile = os.path.join(self.perce_path,file_.replace('.png','.json'))
                 imgdata5 = cv2.imread(pngfile)
                 for temp in (utils.get_json_data(jsonfile))["tracks"]:
-                    perce_type5 = self.enum_obstacle[temp["obstacle_type"]][:4]
+                    perce_type5 = self.enum_obstacle[temp["obstacle_type"]][:3]
                     x5 = int(temp["uv_bbox2d"]["obstacle_bbox.x"]) * self.proportion
                     y5 = int(temp["uv_bbox2d"]["obstacle_bbox.y"]) * self.proportion - self.percecut
                     w5 = int(temp["uv_bbox2d"]["obstacle_bbox.width"]) * self.proportion
