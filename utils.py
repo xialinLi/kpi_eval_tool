@@ -148,7 +148,7 @@ def is_in_poly(p, poly):
     return is_in
 
 # iou
-def bb_intersection_over_union(boxA, boxB):
+def bb_intersection_over_union_front(boxA, boxB):
     '''
     iou计算
     boxA 是lablebox，boxB 是percebox
@@ -176,6 +176,29 @@ def bb_intersection_over_union(boxA, boxB):
     iou = interArea / (areaA + areaB - interArea)
     return iou
 
+def bb_intersection_over_union_side(boxA, boxB):
+    proportion = config.side_2d_config["proportion"]
+    A11 = boxA["x"]
+    A12 = boxA["x"] + boxA["w"]
+    A21 = boxA["y"] 
+    A22 = boxA["y"] + boxA["h"]
+
+    B11 = boxB["x"] * proportion
+    B12 = (boxB["x"] + boxB["w"]) *proportion
+    B21 = boxB["y"] * proportion
+    B22 = (boxB["y"] + boxB["h"])* proportion
+
+    areaA = boxA["h"] * boxA["w"]
+    areaB = boxB["h"] * proportion * boxB["w"] * proportion
+
+    interW = max(0, min(A12, B12) - max(A11, B11))
+    interH = max(0, min(A22, B22) - max(A21, B21))
+
+    interArea = interH * interW
+    iou = interArea / (areaA + areaB - interArea)
+    return iou
+
+
 def get_lable_2d_boxs(lable_json_data):
     lable_json_boxs_list = lable_json_data["task_vehicle"]
     return lable_json_boxs_list
@@ -195,7 +218,7 @@ def get_box_point(box):
     y1 = int(y+h)
     return x,y,x1,y1
 
-def front_2d_get_box_point(box):
+def get_box_point(box):
 
     w = box["w"] 
     h = box["h"]
