@@ -1,3 +1,4 @@
+from contextlib import nullcontext
 from distutils import command
 from genericpath import exists
 from ntpath import join
@@ -272,15 +273,17 @@ class Eval2DFront:
                 pngfile = os.path.join(root,file_)
                 jsonfile = os.path.join(self.perce_path,file_.replace('.png','.json'))
                 imgdata5 = cv2.imread(pngfile)
-                for temp in (utils.get_json_data(jsonfile))["tracks"]:
-                    perce_type5 = self.enum_obstacle[temp["obstacle_type"]][:3]
-                    x5 = int(temp["uv_bbox2d"]["obstacle_bbox.x"]) * self.proportion
-                    y5 = int(temp["uv_bbox2d"]["obstacle_bbox.y"]) * self.proportion - self.percecut
-                    w5 = int(temp["uv_bbox2d"]["obstacle_bbox.width"]) * self.proportion
-                    h5 = int(temp["uv_bbox2d"]["obstacle_bbox.height"]) * self.proportion
-                    cv2.rectangle(imgdata5,(x5,y5),(x5+w5,y5+h5),(0,0,255),1)
-                    cv2.putText(imgdata5,perce_type5,(x5,y5),cv2.FONT_HERSHEY_SIMPLEX,1,(0,0,255),1)
-                cv2.imwrite(pngfile, imgdata5) 
+                json_data_tracks = utils.get_json_data(jsonfile)["tracks"]
+                if json_data_tracks!=[] and not json_data_tracks and json_data_tracks!=None:
+                    for temp in json_data_tracks:
+                        perce_type5 = self.enum_obstacle[temp["obstacle_type"]]
+                        x5 = int(temp["uv_bbox2d"]["obstacle_bbox.x"]) * self.proportion
+                        y5 = int(temp["uv_bbox2d"]["obstacle_bbox.y"]) * self.proportion - self.percecut
+                        w5 = int(temp["uv_bbox2d"]["obstacle_bbox.width"]) * self.proportion
+                        h5 = int(temp["uv_bbox2d"]["obstacle_bbox.height"]) * self.proportion
+                        cv2.rectangle(imgdata5,(x5,y5),(x5+w5,y5+h5),(0,0,255),1)
+                        cv2.putText(imgdata5,perce_type5[:3],(x5,y5),cv2.FONT_HERSHEY_SIMPLEX,1,(0,0,255),1)
+                    cv2.imwrite(pngfile, imgdata5) 
 
 
                  
