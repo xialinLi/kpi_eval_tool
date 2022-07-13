@@ -127,9 +127,11 @@ class Eval2DFront:
                                       "h" : perce_temp["uv_bbox2d"]["obstacle_bbox.height"]}
                     perce_boxs_list.append(perce_box)
 
-            if perce_type_list==[]:
+            if perce_type_list==[] and lable_type_list!=[]:
                 for h in range(len(lable_boxs_list)):
-                    is_in_attentionArea = utils.judge_is_in_attentionArea(lable_boxs_list[h]["x"],lable_boxs_list[h]["y"], attention_area)
+                    center_x = lable_boxs_list[h]["x"] + lable_boxs_list[h]["w"]/2
+                    center_y = lable_boxs_list[h]["y"] + lable_boxs_list[h]["h"]/2
+                    is_in_attentionArea = utils.judge_is_in_attentionArea(center_x,center_y, attention_area)
                     if lable_type_list[h] not in self.obstacle_type or int(lable_occluded_list[h])!=0 or (is_in_attentionArea==False):
                         continue
                     df.iloc[2, df.columns.get_loc(lable_type_list[h])] += 1
@@ -138,17 +140,22 @@ class Eval2DFront:
                     print_missdet_json["perce_type"] = None
                     print_missdet_json["lable_box"] = lable_boxs_list[h]
                     print_missdet_json["perce_box"] = None
-                    print_missdet.append(print_missdet_json)                    
-                with open(os.path.join(missdet_json,lable_json_name),'a') as pf2:
-                    json.dump(print_missdet,pf2,indent=4)
+                    print_missdet.append(print_missdet_json)
+                if print_missdet!=[]:                    
+                    with open(os.path.join(missdet_json,lable_json_name),'a') as pf2:
+                        json.dump(print_missdet,pf2,indent=4)
             else:
                 for j in range(len(lable_type_list)):
-                    is_in_attentionArea = utils.judge_is_in_attentionArea(lable_boxs_list[j]["x"],lable_boxs_list[j]["y"], attention_area)
+                    center_x2 = lable_boxs_list[j]["x"] + lable_boxs_list[j]["w"]/2
+                    center_y2 = lable_boxs_list[j]["y"] + lable_boxs_list[j]["h"]/2
+                    is_in_attentionArea = utils.judge_is_in_attentionArea(center_x2,center_y2, attention_area)
                     if int(lable_occluded_list[j])!=0 or (lable_type_list[j] not in self.obstacle_type) or (is_in_attentionArea==False):
                         continue
                     iou_result = {}
                     for k in range(len(perce_type_list)):
                         iou_result[k] = utils.bb_intersection_over_union_front(lable_boxs_list[j],perce_boxs_list[k])
+                    if iou_result=={}:
+                        continue
                     iou_max_item = max(iou_result.items(), key=lambda x: x[1])
                     iou_max_value = iou_max_item[1]
                     iou_max_id = iou_max_item[0]
@@ -177,7 +184,11 @@ class Eval2DFront:
                 for t in range(len(perce_type_list)):
                     perce_x = (perce_boxs_list[t]["x"]) * self.proportion
                     perce_y = (perce_boxs_list[t]["y"]) * self.proportion - self.percecut
-                    is_in_attentionArea = utils.judge_is_in_attentionArea(perce_x, perce_y, attention_area)
+                    perce_w = (perce_boxs_list[t]["w"]) * self.proportion
+                    perce_h = (perce_boxs_list[t]["h"]) * self.proportion - self.percecut
+                    center_x3 = perce_x + perce_w/2
+                    center_y3 = perce_y + perce_h/2
+                    is_in_attentionArea = utils.judge_is_in_attentionArea(center_x3, center_y3, attention_area)
                     if (is_in_attentionArea==False) or (perce_type_list[t] not in self.obstacle_type):
                                 continue
                     iou_result={}
