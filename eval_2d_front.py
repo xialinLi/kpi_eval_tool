@@ -39,28 +39,27 @@ class Eval2DFront:
         本方法主要是：将标注的整个json分成多个json,类似感知结果json
         '''
         self.perce_jsons_list = utils.get_json_list(self.perce_path)
-        # self.lable_jsons_old_list = utils.get_json_list(self.lable_path)
-        # self.lable_new_path = os.path.join(os.path.dirname(self.lable_path),'new_gt')
-        # if os.path.exists(self.lable_new_path):
-        #     shutil.rmtree(self.lable_new_path)
-        # os.makedirs(self.lable_new_path)
-        # lable_json_data = utils.get_json_data(self.lable_jsons_old_list[0])
-        # for lable_result in lable_json_data:
-        #     if lable_result["task_vehicle"]==[]:
-        #         continue
-        #     lable_result_temp = lable_result
-        #     lable_json_name = (lable_result["filename"])[:-4] + '.json'
-        #     lable_new_json_path = self.lable_new_path + '/' + lable_json_name
-        #     for perce_json in self.perce_jsons_list:
-        #         perce_json_name = os.path.basename(perce_json)
-        #         if lable_json_name == perce_json_name: 
-        #             with open(lable_new_json_path,'w') as f:
-        #                 json.dump(lable_result_temp,f,indent=4)
-        #             break
-        #     if not os.path.exists(lable_new_json_path):
-        #         print('感知结果目录下不存在'+ lable_json_name + '文件，请检查！')
-        # self.lable_jsons_list = utils.get_json_list(self.lable_new_path)
-        self.lable_jsons_list = utils.get_json_list(self.lable_path)
+        self.lable_jsons_old_list = utils.get_json_list(self.lable_path)
+        self.lable_new_path = os.path.join(os.path.dirname(self.lable_path),(os.path.basename(self.lable_path)+'_new'))
+        if os.path.exists(self.lable_new_path):
+            shutil.rmtree(self.lable_new_path)
+        os.makedirs(self.lable_new_path)
+        lable_json_data = utils.get_json_data(self.lable_jsons_old_list[0])
+        for lable_result in lable_json_data:
+            if lable_result["task_vehicle"]==[]:
+                continue
+            lable_result_temp = lable_result
+            lable_json_name = (lable_result["filename"])[:-4] + '.json'
+            lable_new_json_path = self.lable_new_path + '/' + lable_json_name
+            for perce_json in self.perce_jsons_list:
+                perce_json_name = os.path.basename(perce_json)
+                if lable_json_name == perce_json_name: 
+                    with open(lable_new_json_path,'w') as f:
+                        json.dump(lable_result_temp,f,indent=4)
+                    break
+            if not os.path.exists(lable_new_json_path):
+                print('感知结果目录下不存在'+ lable_json_name + '文件，请检查！')
+        self.lable_jsons_list = utils.get_json_list(self.lable_new_path)
     
     def match_lable_perce(self):
         '''
@@ -73,6 +72,8 @@ class Eval2DFront:
                 perce_json_name = os.path.basename(perce_json)
                 if lable_json_name==perce_json_name:
                     self.perce_jsons_list_new.append(perce_json)
+        # print(len(self.lable_jsons_list))
+        # print(len(self.perce_jsons_list_new))
         if len(self.lable_jsons_list)!=len(self.perce_jsons_list_new):
             print('感知json数量和标注json数量不一致，请检查！')
 
@@ -267,7 +268,7 @@ class Eval2DFront:
         for root,_,files in os.walk(os.path.join(self.err_pic,'errdet')):
             for file_ in files:
                 pngfile = os.path.join(root,file_)
-                jsonfile = os.path.join(self.lable_path,(file_.replace('.png','.json')))
+                jsonfile = os.path.join(self.lable_new_path,(file_.replace('.png','.json')))
                 imgdata4 = cv2.imread(pngfile)
                 for temp in (utils.get_json_data(jsonfile))["task_vehicle"]:
                     lable_type4 = temp["tags"]["class"][:3]

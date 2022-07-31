@@ -30,11 +30,12 @@ side_3d_config = {
     'bus': {0: 'big', 1: 'small', 2:'other'}
 }
 
+
 front_2d_config = {
     'iou' : 0.5,
-    'topcut': 0,
-    'topadd': 110,
-    'percecut':110,
+    # 'topcut': 0,
+    'topadd': 160,
+    'percecut':160,
     'proportion':3,
     'obstacle_type' : ['car', 'truck', 'bus', 'pedestrian', 'bicycle', 'motorcycle', 'tricycle','misc','cone','barrier','safety-crash-barrels',
                       'tripod', 'traffic_light', 'traffic_sign','parking_lock'],
