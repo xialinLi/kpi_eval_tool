@@ -1,9 +1,7 @@
 #!/usr/bin/python
 import argparse
-import eval_2d_side
-import eval_3d_side
 import eval_2d_front
-import eval_2d_side_new
+import eval_3d_front
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -18,20 +16,8 @@ if __name__ == '__main__':
     args = parse_args()
     lable_path = args.lablepath
     perce_path = args.percepath
-    ori_pic_path = args.oripicpath
     eval_type = args.evaltype
-    if eval_type == 'side2d':
-        eval_2d_side = eval_2d_side_new.Eval2DSide(lable_path,perce_path,ori_pic_path)
-        eval_2d_side.proc_json_data()
-        eval_2d_side.match_lable_perce()
-        eval_2d_side.eval_2d_side_recall_precision()
-        if ori_pic_path:
-            eval_2d_side.get_oripic_depend_errorjson()
-            eval_2d_side.draw_pic()
-
-    if eval_type == 'side3d':
-        eval_3d_side = eval_3d_side.Eval3DSide(lable_path,perce_path)
-        eval_3d_side.proc_json_data()
+    ori_pic_path = args.oripicpath
         
     if eval_type == 'front2d':
         eval_2d_front = eval_2d_front.Eval2DFront(lable_path,perce_path,ori_pic_path)
@@ -41,5 +27,9 @@ if __name__ == '__main__':
         if ori_pic_path:
             eval_2d_front.get_oripic_depend_errorjson()
             eval_2d_front.draw_pic()
+
+    if eval_type == 'front3d':
+        eval_3d_front = eval_3d_front.Eval3DFront(lable_path,perce_path)
+        eval_3d_front.proc_json_data()
 
 
