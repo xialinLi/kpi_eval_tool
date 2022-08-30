@@ -76,37 +76,6 @@ def walk(p, regex='**/*'):
     return walks
 
 
-
-def get_lable_box(lable_tag):
-    #2d，（x,y）标注标的是中心点
-    topcut = config.side_2d_config["topcut"]
-    proportion = config.side_2d_config["proportion"]
-    lable_box = {}
-    h = lable_tag["tags"]["h"]
-    w = lable_tag["tags"]["w"]
-    x = lable_tag["tags"]["x"]
-    y = lable_tag["tags"]["y"] 
-    lable_box["h"] = h / proportion
-    lable_box["w"] = w / proportion
-    lable_box["x"] = x / proportion
-    lable_box["y"] = y / proportion
-    return lable_box, x, (y+topcut)
-
-def front_2d_get_lable_box(lable_tag):
-    #2d，（x,y）标注标的是中心点
-    topadd = config.front_2d_config["topadd"]
-    proportion = config.front_2d_config["proportion"]
-    lable_box = {}
-    h = lable_tag["tags"]["h"]
-    w = lable_tag["tags"]["w"]
-    x = lable_tag["tags"]["x"]
-    y = lable_tag["tags"]["y"] 
-    lable_box["h"] = h / proportion
-    lable_box["w"] = w / proportion
-    lable_box["x"] = x / proportion
-    lable_box["y"] = (y + topadd)/ proportion
-    return lable_box, x, y, w,h
-
 def judge_is_in_attentionArea(x,y, attention_area):
     is_in = False  
     point = [x, y]
@@ -154,20 +123,21 @@ def bb_intersection_over_union_front(boxA, boxB):
     boxA 是lablebox，boxB 是percebox
     lable和perce都是左上角点
     '''
-    percecut = config.front_2d_config["percecut"]
-    proportion = config.front_2d_config["proportion"]
+    top_cut = config.front_config["top_cut"]
+    multiple = config.front_config["multiple"]
+    top_black_edge = config.front_config["top_black_edge"]
     A11 = boxA["x"]
     A12 = boxA["x"] + boxA["w"]
     A21 = boxA["y"] 
     A22 = boxA["y"] + boxA["h"]
 
-    B11 = boxB["x"] * proportion
-    B12 = (boxB["x"] + boxB["w"]) *proportion
-    B21 = boxB["y"] * proportion - percecut
-    B22 = (boxB["y"] + boxB["h"])* proportion - percecut
+    B11 = boxB["x"] * multiple
+    B12 = (boxB["x"] + boxB["w"]) * multiple
+    B21 = boxB["y"] * multiple - (top_black_edge - top_cut)
+    B22 = (boxB["y"] + boxB["h"])* multiple - top_cut
 
     areaA = boxA["h"] * boxA["w"]
-    areaB = boxB["h"] * proportion * boxB["w"] * proportion
+    areaB = boxB["h"] * multiple * boxB["w"] * multiple
 
     interW = max(0, min(A12, B12) - max(A11, B11))
     interH = max(0, min(A22, B22) - max(A21, B21))
@@ -175,29 +145,6 @@ def bb_intersection_over_union_front(boxA, boxB):
     interArea = interH * interW
     iou = interArea / (areaA + areaB - interArea)
     return iou
-
-def bb_intersection_over_union_side(boxA, boxB):
-    proportion = config.side_2d_config["proportion"]
-    A11 = boxA["x"]
-    A12 = boxA["x"] + boxA["w"]
-    A21 = boxA["y"] 
-    A22 = boxA["y"] + boxA["h"]
-
-    B11 = boxB["x"] * proportion
-    B12 = (boxB["x"] + boxB["w"]) *proportion
-    B21 = boxB["y"] * proportion
-    B22 = (boxB["y"] + boxB["h"])* proportion
-
-    areaA = boxA["h"] * boxA["w"]
-    areaB = boxB["h"] * proportion * boxB["w"] * proportion
-
-    interW = max(0, min(A12, B12) - max(A11, B11))
-    interH = max(0, min(A22, B22) - max(A21, B21))
-
-    interArea = interH * interW
-    iou = interArea / (areaA + areaB - interArea)
-    return iou
-
 
 def get_lable_2d_boxs(lable_json_data):
     lable_json_boxs_list = lable_json_data["task_vehicle"]
@@ -208,55 +155,14 @@ def get_perce_2d_boxs(perce_json_data):
     return perce_json_boxs_list
 
 def get_box_point(box):
-    proportion = config.side_2d_config["proportion"]
-    topcut = config.side_2d_config["topcut"]
-    w = box["w"] * proportion
-    h = box["h"] * proportion
-    x = int(box["x"] * proportion)
-    y = int(box["y"] * proportion + topcut)
-    x1 = int(x+w)
-    y1 = int(y+h)
-    return x,y,x1,y1
-
-def get_box_point(box):
-
-    w = box["w"] 
-    h = box["h"]
+    w = int(box["w"])
+    h = int(box["h"])
     x = int(box["x"])
     y = int(box["y"])
-    x1 = int(x+w)
-    y1 = int(y+h)
-    return x,y,x1,y1
+    return x,y,w,h
 
-# 距离标注生成速度和加速度
-def add_track_id_helper(last_json_data, json_data, idx):
-    '增加track id'
-    for tempA in json_data:
-        boxA = {}
-        boxA["h"] = tempA["box_2d"]["h"]
-        boxA["w"] = tempA["box_2d"]["w"]
-        boxA["x"] = tempA["box_2d"]['x']
-        boxA["y"] = tempA["box_2d"]['y']
-
-        iou_result = {}
-        for num, tempB in enumerate(last_json_data):
-            boxB = {}
-            boxB["h"] = tempB["box_2d"]["h"]
-            boxB["w"] = tempB["box_2d"]["w"]
-            boxB["x"] = tempB["box_2d"]['x']
-            boxB["y"] = tempB["box_2d"]['y']
-
-            iou = bb_intersection_over_union(boxA, boxB)
-            iou_result[num] = iou
-
-        iou_max_item = max(iou_result.items(), key=lambda x: x[1])
-        iou_max_value, iou_max_id = iou_max_item[1], iou_max_item[0]
-        if iou_max_value >= 0.70:
-            tempA['id'] = last_json_data[iou_max_id]["id"]
-        else:
-            tempA['id'] = idx
-            idx += 1
-    return json_data, idx
-
-
-
+def get_dist_from_type_front(type):
+    max_dist = config.front_config["range_x_max_3d"][type]
+    min_dist = int(max_dist/3)
+    mid_dist = min_dist*2
+    return min_dist,mid_dist,max_dist
