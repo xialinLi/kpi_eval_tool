@@ -30,6 +30,6 @@ front_config = {
                   'cone':56, 'barrier':63, 'safety-crash-barrels':63, 'traffic_light':60,
                   'traffic_sign_0.6x0.6':60, 'traffic_sign_0.8x0.8':78, 'traffic_sign_1x1':98},
     'obstacle_type_3d' : ['car', 'truck', 'bus', 'pedestrian', 'bicycle', 'motorcycle', 'tricycle'],
-    'range_y': {'ego':(0, 1.8),'first': (1.8, 5.3), 'second': (5.3, 8.8), 'third': (8.8, 12.3),'All':(0,12.3)},
+    'range_y': {'first': (0, 3.5), 'second': (3.5, 7), 'third': (7, 10),'All':(0,10)},
     'range_x_max_3d': {'car':200, 'truck':240, 'bus':240, 'motorcycle':112, 'bicycle':112, 'ped_adult':94, 'ped_kid':77, 'tricycle':126, 'pedestrian':94}
 }

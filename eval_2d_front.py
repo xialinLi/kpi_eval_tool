@@ -297,6 +297,3 @@ class Eval2DFront:
                         cv2.rectangle(imgdata5,(x5,y5),(x5+w5,y5+h5),(0,0,255),1)
                         cv2.putText(imgdata5,perce_type5[:3],(x5,y5),cv2.FONT_HERSHEY_SIMPLEX,1,(0,0,255),1)
                     cv2.imwrite(pngfile, imgdata5) 
-
-
-                 
