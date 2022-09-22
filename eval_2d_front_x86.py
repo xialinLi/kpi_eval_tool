@@ -52,7 +52,7 @@ class Eval2DFront:
             lable_json_name = (lable_result["filename"]).split('_')[-1].split('.')[0].zfill(4) + '.json'
             lable_new_json_path = self.lable_new_path + '/' + lable_json_name
             for perce_json in self.perce_jsons_list:
-                perce_json_name = os.path.basename(perce_json)
+                perce_json_name = os.path.basename(perce_json).split('.')[0].zfill(4) + '.json'
                 if lable_json_name == perce_json_name: 
                     with open(lable_new_json_path,'w') as f:
                         json.dump(lable_result,f,indent=4)
@@ -65,13 +65,14 @@ class Eval2DFront:
         '''
         self.perce_jsons_list_new = []
         for lable_json in  self.lable_jsons_list:
-            lable_json_name = os.path.basename(lable_json)
+            lable_json_name = os.path.basename(lable_json) 
             for perce_json in self.perce_jsons_list:
-                perce_json_name = os.path.basename(perce_json)
+                perce_json_name = os.path.basename(perce_json).split('.')[0].zfill(4) + '.json'
+                # print('perce json:%s',perce_json_name)
                 if lable_json_name==perce_json_name:
                     self.perce_jsons_list_new.append(perce_json)
-        # print(len(self.lable_jsons_list))
-        # print(len(self.perce_jsons_list_new))
+        print(len(self.lable_jsons_list))
+        print(len(self.perce_jsons_list_new))
         if len(self.lable_jsons_list)!=len(self.perce_jsons_list_new):
             print('感知json数量和标注json数量不一致，请检查！')
 
@@ -117,13 +118,16 @@ class Eval2DFront:
                                 "w" : lable_temp["tags"]["width"],
                                 "h" : lable_temp["tags"]["height"]}
                     lable_boxs_list.append(lable_box)
-            if perce_json_data and perce_json_data[0]["front_far"]["tracks"]:
-                for perce_temp in perce_json_data[0]["front_far"]["tracks"]:
+            if perce_json_data[1]["FOV30"]["tracks"]==[] or perce_json_data[1]["FOV30"]["tracks"]==None:
+                perce_type_list=[]
+                perce_boxs_list = []
+            else:
+                for perce_temp in perce_json_data[1]["FOV30"]["tracks"]:
                     perce_type_list.append(self.enum_obstacle[(perce_temp["obstacle_type"])])
                     perce_box = {"x" : perce_temp["uv_bbox2d"]["obstacle_bbox.x"],
-                                      "y" : perce_temp["uv_bbox2d"]["obstacle_bbox.y"],
-                                      "w" : perce_temp["uv_bbox2d"]["obstacle_bbox.width"],
-                                      "h" : perce_temp["uv_bbox2d"]["obstacle_bbox.height"]}
+                                        "y" : perce_temp["uv_bbox2d"]["obstacle_bbox.y"],
+                                        "w" : perce_temp["uv_bbox2d"]["obstacle_bbox.width"],
+                                        "h" : perce_temp["uv_bbox2d"]["obstacle_bbox.height"]}
                     perce_boxs_list.append(perce_box)
 
             if perce_type_list==[] and lable_type_list!=[]:
@@ -133,6 +137,7 @@ class Eval2DFront:
                     is_in_attentionArea = utils.judge_is_in_attentionArea(center_x,center_y, attention_area)
                     if lable_type_list[h] not in self.obstacle_type or int(lable_occluded_list[h])!=0 or (is_in_attentionArea==False):
                         continue
+                    df.iloc[4, df.columns.get_loc(lable_type_list[h])] += 1
                     df.iloc[2, df.columns.get_loc(lable_type_list[h])] += 1
                     print_missdet_json ={}
                     print_missdet_json["lable_type"] = lable_type_list[h]
@@ -143,13 +148,14 @@ class Eval2DFront:
                 if print_missdet!=[]:                    
                     with open(os.path.join(missdet_json,lable_json_name),'a') as pf2:
                         json.dump(print_missdet,pf2,indent=4)
-            else:
+            elif perce_type_list!=[] and lable_type_list!=[]:
                 for j in range(len(lable_type_list)):
                     center_x2 = lable_boxs_list[j]["x"] + lable_boxs_list[j]["w"]/2
                     center_y2 = lable_boxs_list[j]["y"] + lable_boxs_list[j]["h"]/2
                     is_in_attentionArea = utils.judge_is_in_attentionArea(center_x2,center_y2, attention_area)
                     if int(lable_occluded_list[j])!=0 or (lable_type_list[j] not in self.obstacle_type) or (is_in_attentionArea==False):
                         continue
+                    df.iloc[4, df.columns.get_loc(lable_type_list[j])] += 1
                     iou_result = {}
                     for k in range(len(perce_type_list)):
                         iou_result[k] = utils.bb_intersection_over_union_front(lable_boxs_list[j],perce_boxs_list[k])
@@ -189,7 +195,7 @@ class Eval2DFront:
                     center_y3 = perce_y + perce_h/2
                     is_in_attentionArea = utils.judge_is_in_attentionArea(center_x3, center_y3, attention_area)
                     if (is_in_attentionArea==False) or (perce_type_list[t] not in self.obstacle_type):
-                                continue
+                        continue
                     iou_result={}
                     for r in range(len(lable_type_list)):
                         iou_result[r] = utils.bb_intersection_over_union_front(lable_boxs_list[r],perce_boxs_list[t])
@@ -218,9 +224,9 @@ class Eval2DFront:
                         json.dump(print_errdet,pf3,indent=4)
         
         for type in self.obstacle_type:
-            df.iloc[4,df.columns.get_loc(type)] = df.iloc[0,df.columns.get_loc(type)] + df.iloc[1,df.columns.get_loc(type)] + df.iloc[2,df.columns.get_loc(type)]
+            # df.iloc[4,df.columns.get_loc(type)] = df.iloc[0,df.columns.get_loc(type)] + df.iloc[1,df.columns.get_loc(type)] + df.iloc[2,df.columns.get_loc(type)]
             df.iloc[5,df.columns.get_loc(type)] = df.iloc[0,df.columns.get_loc(type)] + df.iloc[1,df.columns.get_loc(type)] + df.iloc[3,df.columns.get_loc(type)]
-            df.iloc[6,df.columns.get_loc(type)] = 0 if df.iloc[4,df.columns.get_loc(type)]==0 else round((df.iloc[0,df.columns.get_loc(type)] + df.iloc[1,df.columns.get_loc(type)])*100/df.iloc[5,df.columns.get_loc(type)],1)
+            df.iloc[6,df.columns.get_loc(type)] = 0 if df.iloc[4,df.columns.get_loc(type)]==0 else round((df.iloc[0,df.columns.get_loc(type)] + df.iloc[1,df.columns.get_loc(type)])*100/df.iloc[4,df.columns.get_loc(type)],1)
             df.iloc[7,df.columns.get_loc(type)] = 0 if df.iloc[5,df.columns.get_loc(type)]==0 else round((df.iloc[0,df.columns.get_loc(type)])*100/df.iloc[5,df.columns.get_loc(type)],1)
         df.to_excel(self.excel_path + '/' + self.str_time + '.xlsx')
         print(df)
@@ -284,9 +290,10 @@ class Eval2DFront:
         for root,_,files in os.walk(os.path.join(self.err_pic,'missdet')):
             for file_ in files:
                 pngfile = os.path.join(root,file_)
-                jsonfile = os.path.join(self.perce_path,file_.replace('.png','.json'))
+                new_jsonname = str(int(file_.split('.')[0])) + '.json'
+                jsonfile = os.path.join(self.perce_path,new_jsonname)
                 imgdata5 = cv2.imread(pngfile)
-                json_data_tracks = utils.get_json_data(jsonfile)[0]["front_far"]["tracks"]
+                json_data_tracks = utils.get_json_data(jsonfile)[1]["FOV30"]["tracks"]
                 if json_data_tracks!=[] and not json_data_tracks and json_data_tracks!=None:
                     for temp in json_data_tracks:
                         perce_type5 = self.enum_obstacle[temp["obstacle_type"]]

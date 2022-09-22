@@ -37,8 +37,6 @@ class Eval3DFront:
                     self.perce_jsons_list.append(perce_json)
         if len(self.lable_jsons_list)!=len(self.perce_jsons_list):
             print('感知json数量和标注json数量不一致，请检查！')
-
-
     
     def record_detection_result(self):
         df = pd.DataFrame(columns=['frame_id','gt_type','gt_dist_x','gt_dist_y','gt_vel_x','perce_dist_x','perce_dist_y','perce_vel_x'])
@@ -88,11 +86,16 @@ class Eval3DFront:
                 iou_max_value = iou_max_item[1]
                 iou_max_id = iou_max_item[0]
                 if iou_max_value >= self.iou:
+                    dist_x_err = abs()
+                    dist_y_err
                     df.loc[m,] = [frameid] + lable_other_info_list[j] + perce_other_info_list[iou_max_id]
                     m +=1
                     del perce_boxs_list[iou_max_id]
                     del perce_other_info_list[iou_max_id]
         df.to_excel(os.path.join(self.excel_path,'record_detection_result.xlsx'))
+    
+    def deal_excel(self):
+        df = pd.read_excel(os.path.join(self.excel_path,'record_detection_result.xlsx'))
 
     def eval_distance(self):
         df = pd.read_excel(os.path.join(self.excel_path,'record_detection_result.xlsx'))
