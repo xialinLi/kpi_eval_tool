@@ -39,7 +39,7 @@ class Eval3DFront:
             print('感知json数量和标注json数量不一致，请检查！')
     
     def record_detection_result(self):
-        df = pd.DataFrame(columns=['frame_id','gt_type','gt_dist_x','gt_dist_y','gt_vel_x','perce_dist_x','perce_dist_y','perce_vel_x'])
+        df = pd.DataFrame(columns=['frame_id','gt_type','gt_dist_x','gt_dist_y','gt_vel_x','perce_dist_x','perce_dist_y','perce_vel_x','dist_x_err','dist_y_err','vel_x_err','dist_x_err_rate','dist_y_err_rate','vel_x_err_rate'])
         m = 0 
         for i in range(len(self.lable_jsons_list)):
             frameid = os.path.basename(self.lable_jsons_list[i]).split('.')[0]
@@ -86,34 +86,35 @@ class Eval3DFront:
                 iou_max_value = iou_max_item[1]
                 iou_max_id = iou_max_item[0]
                 if iou_max_value >= self.iou:
-                    dist_x_err = abs()
-                    dist_y_err
-                    df.loc[m,] = [frameid] + lable_other_info_list[j] + perce_other_info_list[iou_max_id]
+                    # 横纵向误差
+                    dist_x_err = abs(lable_other_info_list[j][1] - perce_other_info_list[iou_max_id][0])
+                    dist_y_err = abs(lable_other_info_list[j][2] - perce_other_info_list[iou_max_id][1])
+                    vel_x_err = -1000 if lable_other_info_list[j][3]==-1000 else abs(lable_other_info_list[j][3] - perce_other_info_list[iou_max_id][2])
+                    # 横纵向误差率
+                    dist_x_err_rate = 0 if lable_other_info_list[j][1]==0 else dist_x_err/lable_other_info_list[j][1]
+                    dist_y_err_rate = 0 if lable_other_info_list[j][2]==0 else dist_y_err/lable_other_info_list[j][2]
+                    if vel_x_err==-1000:
+                        vel_x_err_rate = -1000
+                    elif lable_other_info_list[j][3]==0:
+                        vel_x_err_rate = 0
+                    else:
+                        vel_x_err_rate = vel_x_err/lable_other_info_list[j][3]
+
+                    df.loc[m,] = [frameid] + lable_other_info_list[j] + perce_other_info_list[iou_max_id] + [dist_x_err,dist_y_err,vel_x_err,dist_x_err_rate,dist_y_err_rate,vel_x_err_rate]
                     m +=1
                     del perce_boxs_list[iou_max_id]
                     del perce_other_info_list[iou_max_id]
         df.to_excel(os.path.join(self.excel_path,'record_detection_result.xlsx'))
     
-    def deal_excel(self):
-        df = pd.read_excel(os.path.join(self.excel_path,'record_detection_result.xlsx'))
-
     def eval_distance(self):
         df = pd.read_excel(os.path.join(self.excel_path,'record_detection_result.xlsx'))
+        df1 = pd.read_excel(os.path.join(self.excel_path,'eval_dist_result.xlsx'))
         for i in range(len(self.obstacle_type_3d)):
             obstacle_type = self.obstacle_type_3d[i]
-            min_dis,mid_dis,max_dis = self.get_dis_by_type(obstacle_type)
-            
+            min_dis,mid_dis,max_dis = utils.get_dist_from_type_front(obstacle_type)
             print(df[df['gt_type']==obstacle_type])
-
 
     def eval_vel(self):
         pass
 
-    
-
-    def get_dis_by_type(self, ob_type):
-        max_dis = self.range_x_max_3d[ob_type]
-        min_dis = int(max_dis/3)
-        mid_dis = int(max_dis / 3 *2)
-        return min_dis,mid_dis,max_dis
-    
+        

@@ -9,7 +9,7 @@ def parse_args():
     parser.add_argument('lablepath', type=str, help='标注文件路径')
     parser.add_argument('percepath', type=str, help='感知文件路径')
     parser.add_argument('evaltype', type=str, help='评测类别，比如side2d,sidesubclass,side3d...')
-    parser.add_argument('system', type=str, help='评测的平台，比如x86,tda4,orin')
+    parser.add_argument('--system', type=str, help='评测的平台，比如x86,tda4,orin')
     parser.add_argument('--imgpath', type=str, help='标注原图的图片路径')
     args = parser.parse_args()
     return args

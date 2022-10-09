@@ -73,6 +73,7 @@ class Eval2DFront:
                     self.perce_jsons_list_new.append(perce_json)
         print(len(self.lable_jsons_list))
         print(len(self.perce_jsons_list_new))
+        print('奇瑞2d-day有效评测帧数：6266')
         if len(self.lable_jsons_list)!=len(self.perce_jsons_list_new):
             print('感知json数量和标注json数量不一致，请检查！')
 
